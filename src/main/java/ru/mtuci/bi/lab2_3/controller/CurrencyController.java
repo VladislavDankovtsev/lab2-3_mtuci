@@ -1,63 +1,39 @@
 package ru.mtuci.bi.lab2_3.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.mtuci.bi.lab2_3.dto.*;
+import ru.mtuci.bi.lab2_3.exception.ClientArgumentException;
+import ru.mtuci.bi.lab2_3.service.CurrencyProcessingService;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/currency")
 public class CurrencyController {
 
+    @Autowired
+    private CurrencyProcessingService service;
+
     @GetMapping("/codes")
     public List<CurrencyCodeResponseDto> getListCodes(){
-        CurrencyCodeResponseDto currencyCodeResponseDto = new CurrencyCodeResponseDto();
-        currencyCodeResponseDto.setCode("USD");
-        currencyCodeResponseDto.setName("Доллар США");
-        CurrencyCodeResponseDto currencyCodeResponseDto2 = new CurrencyCodeResponseDto();
-        currencyCodeResponseDto2.setCode("EUR");
-        currencyCodeResponseDto2.setName("Евро");
-        List<CurrencyCodeResponseDto> codeResponseDtoList = new ArrayList<>();
-        codeResponseDtoList.add(currencyCodeResponseDto);
-        codeResponseDtoList.add(currencyCodeResponseDto2);
-        return codeResponseDtoList;
+        return service.listCurrencyCode();
     }
 
     @GetMapping("/RUB/{code}")
     public CurrencyRUBResponseDto getCurrencyRUB(@PathVariable("code") String code){
-        if(code.equals("INR")) {
-            CurrencyRUBResponseDto currencyRUBResponseDto = new CurrencyRUBResponseDto();
-            currencyRUBResponseDto.setCode("INR");
-            currencyRUBResponseDto.setName("Индийских рупий");
-            currencyRUBResponseDto.setNominal(10);
-            currencyRUBResponseDto.setValue(15.2964);
-            return currencyRUBResponseDto;
-        }
-        return null;
+        return service.getCurrencyRUB(code);
     }
 
     @GetMapping("/conversion")
     public CurrencyConversionResponseDto getCurrencyConversion(@RequestParam("code") String code, @RequestParam("value") double value){
-        CurrencyConversionResponseDto currencyConversionResponseDto = new CurrencyConversionResponseDto();
-        if(code.equals("USD")){
-            currencyConversionResponseDto.setCode("USD");
-            currencyConversionResponseDto.setName("Доллар США");
-            currencyConversionResponseDto.setValue(8.57);
-        }
-        return currencyConversionResponseDto;
+        return service.getCurrencyConversion(code, value);
     }
 
     @PostMapping("/conversion")
-    public CurrencyValueResponseDto simplePost2(@RequestBody CurrencyValueRequestDto requestDto){
-        CurrencyValueResponseDto responseDto = new CurrencyValueResponseDto();
-        responseDto.setCodeIn(requestDto.getCodeIn());
-        responseDto.setCodeOut(requestDto.getCodeOut());
-        responseDto.setValueIn(requestDto.getValue());
-        if(requestDto.getCodeIn().equals("USD")&&requestDto.getCodeOut().equals("EUR")){
-            responseDto.setValueOut(requestDto.getValue()*0.9138);
-        }
-        return responseDto;
+    public ResponseEntity<CurrencyValueResponseDto> CurrencyValue(@RequestBody CurrencyValueRequestDto requestDto) throws Exception {
+        return ResponseEntity.ok(service.CurrencyValue(requestDto));
     }
 
 }
