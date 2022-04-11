@@ -9,6 +9,6 @@ public interface CurrencyProcessingService {
     List<CurrencyCodeResponseDto> listCurrencyCode();
     CurrencyRUBResponseDto getCurrencyRUB(String code);
     CurrencyConversionResponseDto getCurrencyConversion(String code,double value);
-    CurrencyValueResponseDto CurrencyValue(CurrencyValueRequestDto requestDto);
+    CurrencyValueResponseDto currencyValue(CurrencyValueRequestDto requestDto);
 
 }

@@ -33,7 +33,6 @@ public class CurrencyController {
 
     @PostMapping("/conversion")
     public ResponseEntity<CurrencyValueResponseDto> CurrencyValue(@RequestBody CurrencyValueRequestDto requestDto) throws Exception {
-        return ResponseEntity.ok(service.CurrencyValue(requestDto));
+        return ResponseEntity.ok(service.currencyValue(requestDto));
     }
-
 }

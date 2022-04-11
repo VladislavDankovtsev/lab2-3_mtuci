@@ -1,7 +1,10 @@
 package ru.mtuci.bi.lab2_3.service.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.mtuci.bi.lab2_3.configuration.ControllerExceptionHandler;
 import ru.mtuci.bi.lab2_3.dto.*;
 import ru.mtuci.bi.lab2_3.dto.cb.CbDto;
 import ru.mtuci.bi.lab2_3.dto.cb.CbOneValute;
@@ -20,7 +23,8 @@ import java.util.stream.Collectors;
 @Service
 public class CurrencyProcessingServiceImpl implements CurrencyProcessingService {
 
-    private final NumberFormat formatter = new DecimalFormat("#0.00");
+    private final NumberFormat FORMATTER = new DecimalFormat("#0.00");
+    Logger logger = LoggerFactory.getLogger(CurrencyProcessingServiceImpl.class);
 
     @Autowired
     private CBService cbService;
@@ -29,6 +33,7 @@ public class CurrencyProcessingServiceImpl implements CurrencyProcessingService 
 
     @Override
     public List<CurrencyCodeResponseDto> listCurrencyCode() {
+        logger.info("listCurrencyCode");
         CbDto cbDto = cbService.getData();
         List<CbOneValute> list = mapper.getAll(cbDto);
         List<CurrencyCodeResponseDto> responseList = new ArrayList<>();
@@ -43,6 +48,7 @@ public class CurrencyProcessingServiceImpl implements CurrencyProcessingService 
 
     @Override
     public CurrencyRUBResponseDto getCurrencyRUB(String code) {
+        logger.info("getCurrencyRUB");
         CbDto cbDto = cbService.getData();
         List<CbOneValute> list = mapper.getAll(cbDto);
         CurrencyRUBResponseDto responseDto = new CurrencyRUBResponseDto();
@@ -60,6 +66,10 @@ public class CurrencyProcessingServiceImpl implements CurrencyProcessingService 
 
     @Override
     public CurrencyConversionResponseDto getCurrencyConversion(String code, double value) {
+        logger.info("getCurrencyConversion");
+        if(value<=0){
+            throw new ClientArgumentException("Число не может быть отрицательным");
+        }
         CbDto cbDto = cbService.getData();
         List<CbOneValute> list = mapper.getAll(cbDto);
         CurrencyConversionResponseDto responseDto = new CurrencyConversionResponseDto();
@@ -68,7 +78,7 @@ public class CurrencyProcessingServiceImpl implements CurrencyProcessingService 
                 double result  = value * obj.getNominal()/(obj.getValue());
                 responseDto.setCode(obj.getCharCode());
                 responseDto.setName(obj.getName());
-                responseDto.setValue(Double.parseDouble(formatter.format(result).replace(",",".")));
+                responseDto.setValue(Double.parseDouble(FORMATTER.format(result).replace(",",".")));
                 return responseDto;
             }
         }
@@ -76,12 +86,15 @@ public class CurrencyProcessingServiceImpl implements CurrencyProcessingService 
     }
 
     @Override
-    public CurrencyValueResponseDto CurrencyValue(CurrencyValueRequestDto requestDto) {
-
+    public CurrencyValueResponseDto currencyValue(CurrencyValueRequestDto requestDto) {
+        logger.info("currencyValue");
+        if(requestDto.getValue()<=0){
+            throw new ClientArgumentException("Число не может быть отрицательным");
+        }
         CbDto cbDto = cbService.getData();
         List<CbOneValute> list = mapper.getAll(cbDto);
-        CbOneValute oneValuteIn = new CbOneValute();
-        CbOneValute oneValuteOut = new CbOneValute();
+        CbOneValute oneValuteIn = null;
+        CbOneValute oneValuteOut = null;
         for (CbOneValute obj : list) {
             if (requestDto.getCodeIn().equals(obj.getCharCode())) {
                 oneValuteIn = obj;
@@ -90,13 +103,18 @@ public class CurrencyProcessingServiceImpl implements CurrencyProcessingService 
                 oneValuteOut = obj;
             }
         }
-
-        double result = 0.0123;
+        if(oneValuteIn == null){
+            throw new ClientArgumentException("По '"+requestDto.getCodeIn()+"' коду валюты ничего не найдено");
+        }
+        if(oneValuteOut == null){
+            throw new ClientArgumentException("По '"+requestDto.getCodeOut()+"' коду валюты ничего не найдено");
+        }
+        double result = 0.0123; //TODO написать формулу конвертации валют
         CurrencyValueResponseDto responseDto = new CurrencyValueResponseDto();
         responseDto.setCodeIn(requestDto.getCodeIn());
         responseDto.setCodeOut(requestDto.getCodeOut());
         responseDto.setValueIn(requestDto.getValue());
-        responseDto.setValueOut(Double.parseDouble(formatter.format(result).replace(",",".")));
+        responseDto.setValueOut(Double.parseDouble(FORMATTER.format(result).replace(",",".")));
         return responseDto;
 
     }
